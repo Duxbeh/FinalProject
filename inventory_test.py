@@ -35,12 +35,12 @@ class Inventory:
         connection.close()
 
     @staticmethod
-    def update_item(name, quantity):
+    def update_item(itemID, quantity):
         cursor = connection.cursor()
 
-        query = "UPDATE Inventory SET Stock=%d WHERE Name=%s"
+        query = "UPDATE Inventory SET Stock=%d WHERE ID=%d"
 
-        cursor.execute(query, quantity, name)
+        cursor.execute(query, quantity, itemID)
 
         connection.commit()
 
