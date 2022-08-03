@@ -53,6 +53,8 @@ class Cart:
                         "ID = %d" % (i, qty, itemID))
 
             print(cursor.rowcount, "record(s) inserted.")
+            print()
+            print()
 
             cursor.execute(query)
             connection.commit()
@@ -96,6 +98,7 @@ class Cart:
 
             cursor.close()
             connection.close()
+
 
 
 
@@ -170,12 +173,12 @@ class Cart:
             sys.exit()
 
         cursor = connection.cursor()
-        cursor.execute("SELECT price FROM cart")
+        cursor.execute("SELECT price, qty FROM cart")
         result = cursor.fetchall()
 
         list = []
         for x in result:
-            list.append(x[0])
+            list.append(x[0] * x[1])
         total = sum(list)
         print("Subtotal:$%d" % total)
         time.sleep(3)
@@ -309,6 +312,8 @@ def main():
             try:
                 cart.check_duplicate(itemID, qty)
                 inv.update_item_add(itemID, qty)
+                print()
+                print()
             except:
                 cart.add_item(itemID, qty)
                 inv.update_item_add(itemID, qty)
