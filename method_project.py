@@ -2,6 +2,7 @@ import mysql.connector
 import sys
 import time
 
+i = 0
 
 class Cart:
     @staticmethod
@@ -21,21 +22,42 @@ class Cart:
 
             ## exits the program if unsuccessful
             sys.exit()
-        i = 1
-        cursor = connection.cursor()
+        try:
+            global i
+            i += 1
+            cursor = connection.cursor()
 
-        query = ("INSERT INTO cart (ID, name, price, qty) SELECT ID, name, price, %d From inventory Where ID = %d" % (
-            qty, itemID))
+            query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+                     "ID = %d" % (i, qty, itemID))
 
-        cursor.execute(query)
-        connection.commit()
+            cursor.execute(query)
+            connection.commit()
 
-        print(cursor.rowcount, "record(s) inserted.")
+            print(cursor.rowcount, "record(s) inserted.")
 
-        cursor.close()
-        connection.close()
-        print()
-        print()
+            cursor.close()
+            connection.close()
+            print()
+            print()
+        except:
+            cursor = connection.cursor()
+            cursor.execute("SELECT number FROM cart")
+            result = cursor.fetchall()
+            list = []
+            for x in result:
+                list.append(x[0])
+
+            list.reverse()
+            i = list[0] + 1
+
+            query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+                        "ID = %d" % (i, qty, itemID))
+
+            cursor.execute(query)
+            connection.commit()
+
+            cursor.close()
+            connection.close()
 
     @staticmethod
     def remove_item(itemID):
@@ -89,8 +111,8 @@ class Cart:
 
         result = cursor.fetchall()
         for x in result:
-            print("Name", x[1])
-            print("ID: ", x[0], "\tPrice:", x[2], "\tQty:", x[3])
+            print("No.", x[0], "\tName", x[2])
+            print("ID: ", x[1], "\tPrice:", x[3], "\tQty:", x[4])
             print()
             cursor.close()
             connection.close()
@@ -222,7 +244,7 @@ class Inventory:
             list.append(i[0])
 
         stock_after = sum(list)
-        print(stock_after)
+
         query = ("UPDATE Inventory SET Stock=%d WHERE ID=%d" % (stock_after, itemID))
 
         cursor.execute(query)
