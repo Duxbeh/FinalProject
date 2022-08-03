@@ -111,7 +111,7 @@ class Cart:
 
         result = cursor.fetchall()
         for x in result:
-            print("No.", x[0], "\tName", x[2])
+            print("Name", x[2])
             print("ID: ", x[1], "\tPrice:", x[3], "\tQty:", x[4])
             print()
             cursor.close()
