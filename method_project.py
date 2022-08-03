@@ -1,6 +1,6 @@
 import mysql.connector
 import sys
-
+import time
 
 class Cart:
     @staticmethod
@@ -76,8 +76,8 @@ class Cart:
                 database="methods"
             )
 
-            print("Successful connection.\n")
-
+            print("Successful connection.")
+            print()
         except:
             print("Failed connection.")
 
@@ -93,6 +93,42 @@ class Cart:
             print()
             cursor.close()
             connection.close()
+
+    @staticmethod
+    def checkout():
+        try:
+            connection = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="",
+                database="methods"
+            )
+
+            print("Successful connection.")
+
+        except:
+            print("Failed connection.")
+
+            ## exits the program if unsuccessful
+            sys.exit()
+
+        cursor = connection.cursor()
+        cursor.execute("SELECT price FROM cart")
+        result = cursor.fetchall()
+
+        list = []
+        for x in result:
+            list.append(x[0])
+        total = sum(list)
+        print("Subtotal:$%d" % total)
+        time.sleep(3)
+        print("Thanks for your order")
+        print()
+
+        cursor.execute("DELETE FROM cart")
+        connection.commit()
+        cursor.close()
+        connection.close()
 
 
 class Inventory:
@@ -182,6 +218,9 @@ def main():
 
         elif user_in == 4:
             cart.display_cart()
+
+        elif user_in == 5:
+            cart.checkout()
 
         elif user_in == 6:
             status = False
