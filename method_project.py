@@ -4,6 +4,7 @@ import time
 
 i = 0
 
+
 class Cart:
     @staticmethod
     def add_item(itemID, qty):
@@ -20,14 +21,16 @@ class Cart:
 
             ## exits the program if unsuccessful
             sys.exit()
-
+        # number is primary key so it can not repeat this try block will insert the first item, if number is repeated it
+        # will raise error
         try:
             global i
             i += 1
             cursor = connection.cursor()
 
-            query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
-                     "ID = %d" % (i, qty, itemID))
+            query = (
+                        "INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+                        "ID = %d" % (i, qty, itemID))
 
             cursor.execute(query)
             connection.commit()
@@ -38,6 +41,8 @@ class Cart:
             connection.close()
             print()
             print()
+        # if error raise means number is repeated, so this block will increment the last number by one and insert the
+        # item
         except:
             cursor = connection.cursor()
             cursor.execute("SELECT number FROM cart")
@@ -49,7 +54,8 @@ class Cart:
             list.reverse()
             i = list[0] + 1
 
-            query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+            query = (
+                        "INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
                         "ID = %d" % (i, qty, itemID))
 
             print(cursor.rowcount, "record(s) inserted.")
@@ -78,6 +84,8 @@ class Cart:
             ## exits the program if unsuccessful
             sys.exit()
 
+        # this function will check if the item is already exit, if yes, then it will update the qty of that item,
+        # so it will not generate a duplicate row
         cursor = connection.cursor()
         cursor.execute("SELECT ID FROM cart where ID=%d" % itemID)
         result1 = cursor.fetchall()
@@ -98,9 +106,6 @@ class Cart:
 
             cursor.close()
             connection.close()
-
-
-
 
     @staticmethod
     def remove_item(itemID):
@@ -169,9 +174,10 @@ class Cart:
         except:
             print("Failed connection.")
 
-            ## exits the program if unsuccessful
+            # exits the program if unsuccessful
             sys.exit()
-
+            
+        # remove all the item in the cart and display user a subtotal
         cursor = connection.cursor()
         cursor.execute("SELECT price, qty FROM cart")
         result = cursor.fetchall()
@@ -221,6 +227,7 @@ class Inventory:
         connection.close()
 
     @staticmethod
+    # this function will update the inventory after item been added to the cart
     def update_item_add(itemID, qty):
         try:
             connection = mysql.connector.connect(
@@ -253,6 +260,7 @@ class Inventory:
         connection.close()
 
     @staticmethod
+    # this function will update the inventory after item been removed from the cart
     def update_item_remove(itemID):
         try:
             connection = mysql.connector.connect(
