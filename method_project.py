@@ -15,13 +15,12 @@ class Cart:
                 database="methods"
             )
 
-            print("Successful connection.")
-
         except:
             print("Failed connection.")
 
             ## exits the program if unsuccessful
             sys.exit()
+
         try:
             global i
             i += 1
@@ -53,11 +52,52 @@ class Cart:
             query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
                         "ID = %d" % (i, qty, itemID))
 
+            print(cursor.rowcount, "record(s) inserted.")
+
             cursor.execute(query)
             connection.commit()
 
             cursor.close()
             connection.close()
+
+    @staticmethod
+    def check_duplicate(itemID, qty):
+        try:
+            connection = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="",
+                database="methods"
+            )
+
+        except:
+            print("Failed connection.")
+
+            ## exits the program if unsuccessful
+            sys.exit()
+
+        cursor = connection.cursor()
+        cursor.execute("SELECT ID FROM cart where ID=%d" % itemID)
+        result1 = cursor.fetchall()
+        for j in result1:
+            cmp = j[0]
+
+        if cmp == itemID:
+            list = []
+            cursor.execute("SELECT qty FROM cart where ID=%d" % itemID)
+            result2 = cursor.fetchall()
+            for x in result2:
+                list.append(x[0])
+            qty_after = list[0] + qty
+            query = ("UPDATE cart SET qty=%d WHERE ID=%d" % (qty_after, itemID))
+            cursor.execute(query)
+
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+
 
     @staticmethod
     def remove_item(itemID):
@@ -68,8 +108,6 @@ class Cart:
                 password="",
                 database="methods"
             )
-
-            print("Successful connection.")
 
         except:
             print("Failed connection.")
@@ -98,8 +136,6 @@ class Cart:
                 password="",
                 database="methods"
             )
-
-            print("Successful connection.")
             print()
         except:
             print("Failed connection.")
@@ -126,8 +162,6 @@ class Cart:
                 password="",
                 database="methods"
             )
-
-            print("Successful connection.")
 
         except:
             print("Failed connection.")
@@ -164,8 +198,7 @@ class Inventory:
                 password="",
                 database="methods"
             )
-
-            print("Successful connection.\n")
+            print()
 
         except:
             print("Failed connection.")
@@ -273,9 +306,12 @@ def main():
         elif user_in == 2:
             itemID = int(input("Enter item ID number: "))
             qty = int(input("Enter quantity of the item: "))
-
-            cart.add_item(itemID, qty)
-            inv.update_item_add(itemID, qty)
+            try:
+                cart.check_duplicate(itemID, qty)
+                inv.update_item_add(itemID, qty)
+            except:
+                cart.add_item(itemID, qty)
+                inv.update_item_add(itemID, qty)
 
         elif user_in == 3:
             itemID = int(input("Enter item ID number: "))
