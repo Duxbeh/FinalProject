@@ -2,6 +2,7 @@ import mysql.connector
 import sys
 import time
 
+
 class Cart:
     @staticmethod
     def add_item(itemID, qty):
@@ -162,7 +163,7 @@ class Inventory:
         connection.close()
 
     @staticmethod
-    def update_item(itemID, quantity):
+    def update_item_add(itemID, qty):
         try:
             connection = mysql.connector.connect(
                 host="localhost",
@@ -170,9 +171,6 @@ class Inventory:
                 password="",
                 database="methods"
             )
-
-            print("Successful connection.\n")
-
         except:
             print("Failed connection.")
 
@@ -180,9 +178,54 @@ class Inventory:
             sys.exit()
         cursor = connection.cursor()
 
-        query = "UPDATE Inventory SET Stock=%d WHERE ID=%d"
+        cursor.execute("SELECT Stock FROM inventory where ID=%d" % itemID)
+        result = cursor.fetchall()
+        for x in result:
+            stock = int(x[0])
 
-        cursor.execute(query, quantity, itemID)
+        stock_after = stock - qty
+
+        query = ("UPDATE Inventory SET Stock=%d WHERE ID=%d" % (stock_after, itemID))
+
+        cursor.execute(query)
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def update_item_remove(itemID):
+        try:
+            connection = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="",
+                database="methods"
+            )
+        except:
+            print("Failed connection.")
+
+            ## exits the program if unsuccessful
+            sys.exit()
+        cursor = connection.cursor()
+
+        list = []
+        cursor.execute("SELECT qty FROM cart where ID=%d" % itemID)
+        result = cursor.fetchall()
+        for x in result:
+            list.append(x[0])
+
+        cursor.execute("SELECT Stock FROM inventory where ID=%d" % itemID)
+        result2 = cursor.fetchall()
+        for i in result2:
+            list.append(i[0])
+
+        stock_after = sum(list)
+        print(stock_after)
+        query = ("UPDATE Inventory SET Stock=%d WHERE ID=%d" % (stock_after, itemID))
+
+        cursor.execute(query)
 
         connection.commit()
 
@@ -210,10 +253,11 @@ def main():
             qty = int(input("Enter quantity of the item: "))
 
             cart.add_item(itemID, qty)
-            # inv.update_item(itemID, qty)
+            inv.update_item_add(itemID, qty)
 
         elif user_in == 3:
             itemID = int(input("Enter item ID number: "))
+            inv.update_item_remove(itemID)
             cart.remove_item(itemID)
 
         elif user_in == 4:
