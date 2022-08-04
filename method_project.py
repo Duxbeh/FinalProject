@@ -3,6 +3,8 @@ import sys
 import time
 
 
+
+
 class Cart:
     @staticmethod
     def add_item(itemID, qty):
@@ -31,8 +33,8 @@ class Cart:
 
             cursor.execute(query)
             connection.commit()
-
-            print(cursor.rowcount, "record(s) inserted.")
+            print()
+            print("\nItem(s) added\n")
 
             cursor.close()
             connection.close()
@@ -53,7 +55,8 @@ class Cart:
             query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
                         "ID = %d" % (num, qty, itemID))
 
-            print(cursor.rowcount, "record(s) inserted.")
+            print()
+            print("\nItem(s) added\n")
             print()
             print()
 
@@ -96,14 +99,15 @@ class Cart:
             qty_after = list[0] + qty
             query = ("UPDATE cart SET qty=%d WHERE ID=%d" % (qty_after, itemID))
             cursor.execute(query)
-
+            print()
+            print("\nItem(s) added\n")
             connection.commit()
 
             cursor.close()
             connection.close()
 
     @staticmethod
-    def remove_item(itemID):
+    def remove_item(itemID, qty):
         try:
             connection = mysql.connector.connect(
                 host="localhost",
@@ -119,16 +123,34 @@ class Cart:
             sys.exit()
         cursor = connection.cursor()
 
-        query = ("DELETE FROM cart WHERE ID=%d" % itemID)
+        cursor.execute("SELECT qty FROM cart where ID=%d" % itemID)
+        result = cursor.fetchall()
+        List = []
+        for x in result:
+            List.append(x[0])
 
-        cursor.execute(query)
+        qty_before = List[0]
+        if qty == qty_before:
+            query = ("DELETE FROM cart WHERE ID=%d" % itemID)
+            cursor.execute(query)
 
-        connection.commit()
+            connection.commit()
+            print()
+            print("Item(s) removed")
+            print()
+            cursor.close()
+            connection.close()
+        else:
+            qty_after = qty_before - qty
+            query = ("UPDATE cart SET qty=%d WHERE ID=%d" % (qty_after, itemID))
+            cursor.execute(query)
 
-        print(cursor.rowcount, "record deleted.")
-        print()
-        cursor.close()
-        connection.close()
+            connection.commit()
+            print()
+            print("Item(s) removed")
+            print()
+            cursor.close()
+            connection.close()
 
     @staticmethod
     def display_cart():
@@ -256,7 +278,7 @@ class Inventory:
 
     @staticmethod
     # this function will update the inventory after item been removed from the cart
-    def update_item_remove(itemID):
+    def update_item_remove(itemID, qty):
         try:
             connection = mysql.connector.connect(
                 host="localhost",
@@ -271,18 +293,12 @@ class Inventory:
             sys.exit()
         cursor = connection.cursor()
 
-        list = []
-        cursor.execute("SELECT qty FROM cart where ID=%d" % itemID)
+        cursor.execute("SELECT Stock FROM inventory where ID=%d" % itemID)
         result = cursor.fetchall()
         for x in result:
-            list.append(x[0])
+            stock = int(x[0])
 
-        cursor.execute("SELECT Stock FROM inventory where ID=%d" % itemID)
-        result2 = cursor.fetchall()
-        for i in result2:
-            list.append(i[0])
-
-        stock_after = sum(list)
+        stock_after = stock + qty
 
         query = ("UPDATE Inventory SET Stock=%d WHERE ID=%d" % (stock_after, itemID))
 
@@ -311,25 +327,70 @@ def main():
             inv.display_inventory()
         elif user_in == 2:
             try:
+                try:
+                    connection = mysql.connector.connect(
+                        host="localhost",
+                        user="root",
+                        password="",
+                        database="methods"
+                    )
+                except:
+                    print("Failed connection.")
+                    sys.exit()
+
                 itemID = int(input("Enter item ID number: "))
                 qty = int(input("Enter quantity of the item: "))
-                try:
-                    cart.check_duplicate(itemID, qty)
-                    inv.update_item_add(itemID, qty)
-                    print()
-                    print()
-                except:
-                    cart.add_item(itemID, qty)
-                    inv.update_item_add(itemID, qty)
+
+                cursor = connection.cursor()
+                cursor.execute("SELECT Stock FROM inventory where ID=%d" % itemID)
+                result = cursor.fetchall()
+                for x in result:
+                    actual_stock = int(x[0])
+
+                if qty < 0 or qty > actual_stock:
+                    raise Exception("Invalid input for quantity!")
+                else:
+                    try:
+                        cart.check_duplicate(itemID, qty)
+                        inv.update_item_add(itemID, qty)
+                        print()
+                        print()
+                    except:
+                        cart.add_item(itemID, qty)
+                        inv.update_item_add(itemID, qty)
             except:
-                print("invalid input")
+                print("\ninvalid input\n")
                 print('\n')
 
         elif user_in == 3:
-            itemID = int(input("Enter item ID number: "))
-            inv.update_item_remove(itemID)
-            cart.remove_item(itemID)
+            try:
+                try:
+                    connection = mysql.connector.connect(
+                        host="localhost",
+                        user="root",
+                        password="",
+                        database="methods"
+                    )
+                except:
+                    print("Failed connection.")
+                    sys.exit()
 
+                itemID = int(input("Enter item ID number: "))
+                qty = int(input("Enter quantity to remove: "))
+
+                cursor = connection.cursor()
+                cursor.execute("SELECT qty FROM cart where ID=%d" % itemID)
+                result = cursor.fetchall()
+                for x in result:
+                    actual_qty = int(x[0])
+                if qty < 0 or qty > actual_qty:
+                    raise Exception("Invalid input for quantity!")
+                else:
+                    cart.remove_item(itemID, qty)
+                    inv.update_item_remove(itemID, qty)
+            except:
+                print("\ninvalid input\n")
+                print('\n')
         elif user_in == 4:
             cart.display_cart()
 
@@ -340,7 +401,7 @@ def main():
             status = False
 
         else:
-            print("Invalid selection\n")
+            print("\nInvalid selection\n")
 
 
 if __name__ == '__main__':
