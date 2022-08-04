@@ -310,16 +310,20 @@ def main():
         if user_in == 1:
             inv.display_inventory()
         elif user_in == 2:
-            itemID = int(input("Enter item ID number: "))
-            qty = int(input("Enter quantity of the item: "))
             try:
-                cart.check_duplicate(itemID, qty)
-                inv.update_item_add(itemID, qty)
-                print()
-                print()
+                itemID = int(input("Enter item ID number: "))
+                qty = int(input("Enter quantity of the item: "))
+                try:
+                    cart.check_duplicate(itemID, qty)
+                    inv.update_item_add(itemID, qty)
+                    print()
+                    print()
+                except:
+                    cart.add_item(itemID, qty)
+                    inv.update_item_add(itemID, qty)
             except:
-                cart.add_item(itemID, qty)
-                inv.update_item_add(itemID, qty)
+                print("invalid input")
+                print('\n')
 
         elif user_in == 3:
             itemID = int(input("Enter item ID number: "))
