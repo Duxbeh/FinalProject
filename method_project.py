@@ -2,8 +2,6 @@ import mysql.connector
 import sys
 import time
 
-i = 0
-
 
 class Cart:
     @staticmethod
@@ -24,12 +22,11 @@ class Cart:
         # number is primary key so it can not repeat this try block will insert the first item, if number is repeated it
         # will raise error
         try:
-            global i
-            i += 1
+
+            i = 1
             cursor = connection.cursor()
 
-            query = (
-                        "INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+            query = ( "INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
                         "ID = %d" % (i, qty, itemID))
 
             cursor.execute(query)
@@ -50,13 +47,11 @@ class Cart:
             list = []
             for x in result:
                 list.append(x[0])
-
+            list.sort()
             list.reverse()
-            i = list[0] + 1
-
-            query = (
-                        "INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
-                        "ID = %d" % (i, qty, itemID))
+            num = list[0] + 1
+            query = ("INSERT INTO cart (number, ID, name, price, qty) SELECT %d, ID, name, price, %d From inventory Where "
+                        "ID = %d" % (num, qty, itemID))
 
             print(cursor.rowcount, "record(s) inserted.")
             print()
@@ -176,7 +171,7 @@ class Cart:
 
             # exits the program if unsuccessful
             sys.exit()
-            
+
         # remove all the item in the cart and display user a subtotal
         cursor = connection.cursor()
         cursor.execute("SELECT price, qty FROM cart")
@@ -184,9 +179,9 @@ class Cart:
 
         list = []
         for x in result:
-            list.append(x[0] * x[1])
+            list.append(float(x[0]) * float(x[1]))
         total = sum(list)
-        print("Subtotal:$%d" % total)
+        print("Subtotal:$%.2f" % total)
         time.sleep(3)
         print("Thanks for your order")
         print()
